@@ -28,3 +28,11 @@ _ide_helper.php
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# Dokumen kerja internal (audit/remediation/investigasi) — tetap di disk, tidak dilacak Git
+/AUDIT-LOG-*.md
+/FINAL-REVIEW-REPORT.md
+/H1-BLOCKER-INVESTIGATION.md
+/H1.1-IMPLEMENTATION-REPORT.md
+/IMAGE-PREVIEW-INVESTIGATION.md
+/ORGANIZATIONAL-STRUCTURE-IMPLEMENTATION-REPORT.md
