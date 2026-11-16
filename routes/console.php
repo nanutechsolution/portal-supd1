@@ -10,6 +10,12 @@ Artisan::command('inspire', function () {
 
 Schedule::command('audit:prune')->daily();
 
+// Backup database harian pukul 02:30 WIB; retensi default 14 hari (ubah via --keep).
+Schedule::command('backup:database')
+    ->dailyAt('02:30')
+    ->withoutOverlapping()
+    ->onOneServer();
+
 Schedule::command('posts:publish-scheduled')
     ->everyMinute()
     ->withoutOverlapping()

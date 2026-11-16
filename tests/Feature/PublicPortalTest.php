@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Category;
 use App\Models\Post;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -201,7 +202,7 @@ class PublicPortalTest extends TestCase
 
     public function test_editor_can_preview_a_draft_without_publishing_or_incrementing_views(): void
     {
-        $editor = \App\Models\User::factory()->editor()->create();
+        $editor = User::factory()->editor()->create();
         $post = Post::factory()->create(['title' => 'Draf Pratinjau Artikel']);
 
         $response = $this->actingAs($editor)->get(route('posts.preview', $post));
@@ -236,8 +237,8 @@ class PublicPortalTest extends TestCase
 
     public function test_post_detail_shows_related_posts_from_same_category(): void
     {
-        $category = \App\Models\Category::factory()->create(['name' => 'Lingkungan Hidup Uji']);
-        $otherCategory = \App\Models\Category::factory()->create(['name' => 'Kehutanan Uji']);
+        $category = Category::factory()->create(['name' => 'Lingkungan Hidup Uji']);
+        $otherCategory = Category::factory()->create(['name' => 'Kehutanan Uji']);
 
         $post = Post::factory()->published()->create([
             'category_id' => $category->id,

@@ -17,8 +17,15 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', HomeController::class)->middleware('cache.public')->name('home');
 
-Route::get('/rss.xml', RssFeedController::class)->name('rss.feed');
-Route::get('/feed', RssFeedController::class);
+Route::get('/rss.xml', RssFeedController::class)
+    ->middleware('throttle:30,1')
+    ->name('rss.feed');
+Route::get('/feed', RssFeedController::class)
+    ->middleware('throttle:30,1');
+
+Route::get('/sitemap.xml', SitemapController::class)
+    ->middleware('throttle:30,1')
+    ->name('sitemap');
 
 Route::get('/berita', [PostController::class, 'index'])
     ->middleware(['throttle:search', 'cache.public'])
@@ -56,5 +63,4 @@ Route::post('/kontak', [ContactController::class, 'store'])
 
 Route::get('/struktur-organisasi', OrganizationalStructureController::class)->middleware('cache.public')->name('structure.index');
 
-Route::get('/sitemap.xml', SitemapController::class)->name('sitemap');
 Route::get('/robots.txt', RobotsController::class)->name('robots');
