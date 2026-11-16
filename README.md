@@ -16,7 +16,12 @@
   <img src="https://img.shields.io/badge/Filament-5-FDAE4B" alt="Filament 5" />
   <img src="https://img.shields.io/badge/Livewire-4-FB70A9" alt="Livewire 4" />
   <img src="https://img.shields.io/badge/Tailwind%20CSS-4-38BDF8?logo=tailwindcss&logoColor=white" alt="Tailwind CSS 4" />
+  <img src="https://github.com/nanutechsolution/portal-supd1/actions/workflows/ci.yml/badge.svg" alt="CI" />
   <img src="https://img.shields.io/badge/Lisensi-Proprietary-1F2937" alt="Proprietary" />
+</p>
+
+<p align="center">
+  <a href="CHANGELOG.md">Changelog</a> · <a href="CONTRIBUTING.md">Kontribusi</a> · <a href="SECURITY.md">Keamanan</a> · <a href="docs/OPERATIONS.md">Operasi</a> · <a href="LICENSE">Lisensi</a>
 </p>
 
 ![Beranda Portal SUPD I](docs/images/public-home.png)
@@ -102,6 +107,7 @@ jatuh kembali ke bawaan yang aman.
 | `posts:publish-scheduled` | setiap menit | Mencatat jejak audit penerbitan otomatis untuk berita terjadwal yang jam tayangnya baru terlampaui (publikasi sendiri ditangani scope `published()`) |
 | `audit:prune` | harian | Menghapus audit log lama sesuai retensi |
 | `reports:email-monthly` | bulanan (tgl 1, 07:00 WIB) | Mengirim laporan bulanan via email (xlsx) |
+| `backup:database` | harian (02:30 WIB) | Backup database (SQLite copy / mysqldump / pg_dump, di-gzip) + rotasi retensi (`--keep=14`) |
 
 ## Cuplikan layar
 
@@ -204,11 +210,27 @@ composer test             # config:clear + test
 php artisan test --filter=AdminAppearanceTest
 ```
 
-## Kualitas kode
+## Kualitas kode & CI
 
 ```bash
 vendor/bin/pint           # format seluruh perubahan
 vendor/bin/pint --dirty   # hanya berkas yang berubah (butuh Git)
+```
+
+Setiap push ke `main` dan pull request dijalankan otomatis oleh GitHub Actions
+(`.github/workflows/ci.yml`): build, Pint, dan seluruh suite pengujian.
+
+## Operasional & backup
+
+Untuk deployment produksi, penjadwalan, queue worker, backup harian database,
+rotasi log, monitoring (`GET /up`), dan troubleshooting, lihat
+[docs/OPERATIONS.md](docs/OPERATIONS.md).
+
+Backup juga bisa dijalankan manual:
+
+```bash
+php artisan backup:database              # backup + rotasi retensi 14 hari
+php artisan backup:database --keep=30    # ubah masa retensi
 ```
 
 ## Variabel lingkungan penting
@@ -230,7 +252,8 @@ vendor/bin/pint --dirty   # hanya berkas yang berubah (butuh Git)
 
 ```
 app/
-├── Console/Commands/   # posts:publish-scheduled, audit:prune, reports:email-monthly
+├── Console/Commands/   # posts:publish-scheduled, audit:prune, reports:email-monthly,
+│                       #   backup:database
 ├── Enums/              # PostStatus, UserRole
 ├── Filament/           # Resources (Publikasi/Situs/Sistem), Pages (Analitik, Laporan,
 │                       #   ManageSettings, AppearanceSettings), Widgets (statistik dasbor)
@@ -242,8 +265,9 @@ app/
 └── Support/            # Appearance, PortalAnalytics, ReportExporter (xlsx/csv),
                         # AuditLogger, PublicPageCache, MediaIntegrityGuard, CsvSanitizer
 resources/views/        # Blade publik + Blade admin kustom (appearance, laporan, dll.)
-tests/Feature/          # Pengujian fitur (281 tes, mencakup portal publik & panel admin)
-docs/images/            # Aset gambar README
+tests/Feature/          # Pengujian fitur (portal publik, panel admin, keamanan)
+docs/                   # OPERATIONS.md (runbook) + images/ (aset README)
+.github/workflows/      # CI: build + Pint + pengujian
 ```
 
 ## Keamanan
@@ -270,8 +294,14 @@ Ringkasan langkah di server/VPS mana pun:
 
 Aplikasi ini juga siap di-deploy ke **Laravel Cloud** (lihat dokumentasi internal tim).
 
+## Kontribusi
+
+Kontribusi mengikuti alur internal resmi: buat branch, jalankan `vendor/bin/pint` dan
+`php artisan test` sebelum commit, dan perbarui `CHANGELOG.md` untuk perubahan penting.
+Lihat [CONTRIBUTING.md](CONTRIBUTING.md).
+
 ## Lisensi
 
 Copyright © Direktorat Sinkronisasi Urusan Pemerintahan Daerah I. Seluruh hak cipta dilindungi.
 Kode sumber ini tidak boleh disebarluaskan, disalin, atau dipergunakan di luar lingkungan
-resmi tanpa izin tertulis.
+resmi tanpa izin tertulis. Lihat [LICENSE](LICENSE) untuk teks lengkap.

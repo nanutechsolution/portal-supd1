@@ -1,0 +1,38 @@
+Copyright © 2026 Direktorat Sinkronisasi Urusan Pemerintahan Daerah I.
+Seluruh hak cipta dilindungi undang-undang.
+
+PERANGKAT LUNAK INI BUKAN PERANGKAT LUNAK SUMBER TERBUKA (OPEN SOURCE).
+
+1. Kepemilikan
+   Seluruh kode sumber, aset grafis, dan dokumentasi pada repositori ini adalah
+   milik Direktorat Sinkronisasi Urusan Pemerintahan Daerah I. Tidak ada hak
+   cipta yang dialihkan dengan akses ke repositori ini.
+
+2. Penggunaan yang diizinkan
+   - Menjelajahi, membangun, dan menjalankan aplikasi ini untuk keperluan resmi
+     Direktorat Sinkronisasi Urusan Pemerintahan Daerah I.
+   - Mengembangkan dan memelihara kode di dalam lingkungan resmi dengan penugasan
+     tertulis dari Direktorat.
+
+3. Penggunaan yang dilarang
+   Tanpa izin tertulis dari pemegang hak cipta, Anda tidak boleh:
+   - Menyalin, mendistribusikan, atau mempublikasikan kode ini, sebagian atau seluruhnya.
+   - Menggunakan kode ini untuk produk atau layanan komersial pihak ketiga.
+   - Menghapus atau mengubah pemberitahuan hak cipta ini.
+   - Memberikan akses kepada pihak ketiga yang tidak berwenang.
+
+4. Kontribusi
+   Kontribusi hanya diterima melalui alur internal resmi. Dengan mengirimkan
+   kontribusi, Anda menyatakan bahwa Anda berhak menyerahkan kontribusi tersebut
+   dan menyetujui bahwa hak cipta atasnya beralih kepada Direktorat.
+
+5. Tanpa jaminan
+   Perangkat lunak ini disediakan "sebagaimana adanya", tanpa jaminan apa pun,
+   baik tersurat maupun tersirat, termasuk jaminan kelayakan untuk tujuan tertentu.
+   Pemegang hak cipta tidak bertanggung jawab atas kerugian apa pun yang timbul
+   dari penggunaan perangkat lunak ini.
+
+6. Privasi & data
+   Repositori ini tidak boleh memuat kata sandi, token, kunci API, atau data pribadi
+   dalam bentuk apa pun. Temuan terkait hal tersebut harus segera dilaporkan sesuai
+   SECURITY.md.
