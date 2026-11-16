@@ -36,3 +36,12 @@ Thumbs.db
 /H1.1-IMPLEMENTATION-REPORT.md
 /IMAGE-PREVIEW-INVESTIGATION.md
 /ORGANIZATIONAL-STRUCTURE-IMPLEMENTATION-REPORT.md
+
+# Tooling AI/lokal — konfigurasi editor milik masing-masing, tidak perlu ikut clone tim
+/.agents/
+/.claude/
+/AGENTS.md
+/CLAUDE.md
+/.mcp.json
+/opencode.json
+/boost.json
