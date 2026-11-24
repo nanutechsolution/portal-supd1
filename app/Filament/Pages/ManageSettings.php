@@ -74,6 +74,16 @@ class ManageSettings extends Page
                             ->label('Nama direktorat')
                             ->required()
                             ->maxLength(150),
+                        TextInput::make('site_ministry_line1')
+                            ->label('Nama Direktorat Jenderal / Unit Eselon I')
+                            ->helperText('Baris identitas instansi pada header. Kosongkan jika tidak ingin ditampilkan.')
+                            ->maxLength(150)
+                            ->dehydrateStateUsing(fn (?string $state): string => trim((string) $state)),
+                        TextInput::make('site_ministry_line2')
+                            ->label('Nama Kementerian / Lembaga')
+                            ->helperText('Baris identitas instansi pada header. Kosongkan jika tidak ingin ditampilkan.')
+                            ->maxLength(150)
+                            ->dehydrateStateUsing(fn (?string $state): string => trim((string) $state)),
                         TextInput::make('site_portal_label')
                             ->label('Label portal')
                             ->helperText('Baris kedua pada identitas header, misalnya "Portal Informasi dan Buletin".')

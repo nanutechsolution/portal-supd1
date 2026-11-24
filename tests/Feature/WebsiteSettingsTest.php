@@ -44,6 +44,45 @@ class WebsiteSettingsTest extends TestCase
             ]);
     }
 
+    public function test_ministry_identity_settings_have_defaults(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        Livewire::actingAs($admin)
+            ->test(ManageSettings::class)
+            ->assertFormSet([
+                'site_ministry_line1' => 'Direktorat Jenderal Bina Pembangunan Daerah',
+                'site_ministry_line2' => 'Kementerian Dalam Negeri',
+            ]);
+
+        $this->assertDatabaseHas('settings', [
+            'key' => 'site_ministry_line1',
+            'value' => 'Direktorat Jenderal Bina Pembangunan Daerah',
+        ]);
+        $this->assertDatabaseHas('settings', [
+            'key' => 'site_ministry_line2',
+            'value' => 'Kementerian Dalam Negeri',
+        ]);
+
+        $this->assertSame('Direktorat Jenderal Bina Pembangunan Daerah', Setting::get('site_ministry_line1'));
+        $this->assertSame('Kementerian Dalam Negeri', Setting::get('site_ministry_line2'));
+    }
+
+    public function test_ministry_identity_settings_can_be_cleared(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        Livewire::actingAs($admin)
+            ->test(ManageSettings::class)
+            ->set('data.site_ministry_line1', '')
+            ->set('data.site_ministry_line2', '')
+            ->call('save')
+            ->assertHasNoFormErrors();
+
+        $this->assertSame('', Setting::get('site_ministry_line1'));
+        $this->assertSame('', Setting::get('site_ministry_line2'));
+    }
+
     public function test_administrator_can_save_website_settings(): void
     {
         $admin = User::factory()->admin()->create();
@@ -54,6 +93,8 @@ class WebsiteSettingsTest extends TestCase
                 'site_name' => 'Portal Uji SUPD',
                 'site_short_name' => 'SUPD Uji',
                 'site_directorate' => 'Direktorat Uji',
+                'site_ministry_line1' => 'Direktorat Jenderal Uji',
+                'site_ministry_line2' => 'Kementerian Uji',
                 'site_portal_label' => 'Portal Uji',
                 'site_description' => 'Deskripsi website pengujian.',
                 'site_tagline' => 'Tagline pengujian.',
@@ -84,10 +125,14 @@ class WebsiteSettingsTest extends TestCase
             ->assertHasNoFormErrors();
 
         $this->assertDatabaseHas('settings', ['key' => 'site_name', 'value' => 'Portal Uji SUPD']);
+        $this->assertDatabaseHas('settings', ['key' => 'site_ministry_line1', 'value' => 'Direktorat Jenderal Uji']);
+        $this->assertDatabaseHas('settings', ['key' => 'site_ministry_line2', 'value' => 'Kementerian Uji']);
         $this->assertDatabaseHas('settings', ['key' => 'theme_primary', 'value' => '#123456']);
         $this->assertDatabaseHas('settings', ['key' => 'breaking_news_enabled', 'value' => '0']);
 
         $this->assertSame('Portal Uji SUPD', Setting::get('site_name'));
+        $this->assertSame('Direktorat Jenderal Uji', Setting::get('site_ministry_line1'));
+        $this->assertSame('Kementerian Uji', Setting::get('site_ministry_line2'));
         $this->assertSame(4, Setting::int('posts_per_page'));
         $this->assertFalse(Setting::bool('breaking_news_enabled', true));
         $this->assertFalse(Setting::bool('show_header_search', true));

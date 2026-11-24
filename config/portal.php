@@ -17,6 +17,8 @@ return [
         'site_name' => 'Portal Informasi dan Buletin Direktorat SUPD I',
         'site_short_name' => 'SUPD I',
         'site_directorate' => 'Direktorat Sinkronisasi Urusan Pemerintahan Daerah I',
+        'site_ministry_line1' => 'Direktorat Jenderal Bina Pembangunan Daerah',
+        'site_ministry_line2' => 'Kementerian Dalam Negeri',
         'site_portal_label' => 'Portal Informasi dan Buletin',
         'site_description' => 'Portal informasi, buletin, dan dokumentasi kegiatan Direktorat SUPD I.',
         'site_tagline' => 'Kanal publikasi berita, buletin, dan dokumentasi Direktorat Sinkronisasi Urusan Pemerintahan Daerah I.',
