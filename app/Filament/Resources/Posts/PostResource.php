@@ -129,6 +129,10 @@ class PostResource extends Resource
                         ->label('Berita Unggulan')
                         ->helperText('Tampil pada bagian utama halaman depan.')
                         ->columnSpanFull(),
+                    Toggle::make('is_breaking')
+                        ->label('Breaking News')
+                        ->helperText('Tampil paling depan pada baris "Terkini" di beranda setelah berita terbit.')
+                        ->columnSpanFull(),
                 ]),
             Section::make('Gambar Utama')
                 ->schema([
@@ -182,6 +186,10 @@ class PostResource extends Resource
                     ->label('Unggulan')
                     ->boolean()
                     ->sortable(),
+                IconColumn::make('is_breaking')
+                    ->label('Breaking')
+                    ->boolean()
+                    ->sortable(),
                 TextColumn::make('author.name')
                     ->label('Penulis')
                     ->sortable()
@@ -211,6 +219,8 @@ class PostResource extends Resource
                     ->preload(),
                 TernaryFilter::make('is_featured')
                     ->label('Berita unggulan'),
+                TernaryFilter::make('is_breaking')
+                    ->label('Breaking news'),
             ])
             ->recordActions([
                 EditAction::make(),

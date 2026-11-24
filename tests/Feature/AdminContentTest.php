@@ -59,6 +59,22 @@ class AdminContentTest extends TestCase
         $this->assertSame('Judul Setelah Diedit', $post->fresh()->title);
     }
 
+    public function test_administrator_can_mark_a_post_as_breaking_news(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $post = Post::factory()->create(['title' => 'Berita Breaking']);
+
+        Livewire::actingAs($admin)
+            ->test(EditPost::class, ['record' => $post->getRouteKey()])
+            ->fillForm([
+                'is_breaking' => true,
+            ])
+            ->call('save')
+            ->assertHasNoFormErrors();
+
+        $this->assertTrue($post->fresh()->is_breaking);
+    }
+
     public function test_slug_is_generated_uniquely_from_title(): void
     {
         $first = Post::factory()->create(['title' => 'Berita Sama']);

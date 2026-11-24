@@ -131,7 +131,7 @@ class ArchiveTest extends TestCase
 
         $response->assertOk()
             ->assertSee('Arsip Berita — November 2026', false)
-            ->assertSee('<link rel="canonical" href="http://localhost:8000/arsip-berita?tahun=2026&amp;bulan=11"', false)
+            ->assertSee('<link rel="canonical" href="'.e(route('archive.index', ['tahun' => 2026, 'bulan' => 11])).'"', false)
             ->assertSee('<meta name="description"', false);
 
         // Arsip tanpa filter menggunakan kanonik dasar yang bersih.
@@ -181,7 +181,7 @@ class ArchiveTest extends TestCase
             ->assertSee('kategori=rubrik-arsip-uji', false);
 
         $this->assertStringContainsString(
-            '<link rel="canonical" href="http://localhost:8000/arsip-berita?kategori=rubrik-arsip-uji"',
+            '<link rel="canonical" href="'.e(route('archive.index', ['kategori' => 'rubrik-arsip-uji'])).'"',
             $response->getContent(),
         );
     }

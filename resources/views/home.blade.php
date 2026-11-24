@@ -1,15 +1,19 @@
 <x-layouts.public>
-    @if ($latest->isNotEmpty() && \App\Models\Setting::bool('breaking_news_enabled', true))
+    @if ($ticker->isNotEmpty() && \App\Models\Setting::bool('breaking_news_enabled', true))
         <div class="ticker overflow-hidden border-b border-ink-100 bg-white">
             <div class="mx-auto flex max-w-7xl items-center gap-4 px-4 sm:px-6 lg:px-8">
                 <span class="eyebrow shrink-0 bg-accent-400 px-2 py-1 text-ink-950">Terkini</span>
                 <div class="min-w-0 flex-1 overflow-hidden">
                     <div class="ticker-track flex w-max items-center gap-10 py-2">
                         @for ($repeat = 0; $repeat < 2; $repeat++)
-                            @foreach ($latest->take(5) as $tickerPost)
+                            @foreach ($ticker as $tickerPost)
                                 <a href="{{ route('posts.show', $tickerPost) }}"
                                    class="inline-flex shrink-0 items-center gap-3 text-xs text-ink-700 hover:text-accent-600">
-                                    <span class="h-1 w-1 rounded-full bg-accent-400" aria-hidden="true"></span>
+                                    @if ($tickerPost->is_breaking)
+                                        <span class="rounded-sm bg-red-600 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">Breaking</span>
+                                    @else
+                                        <span class="h-1 w-1 rounded-full bg-accent-400" aria-hidden="true"></span>
+                                    @endif
                                     <span class="whitespace-nowrap">{{ $tickerPost->title }}</span>
                                     <span class="whitespace-nowrap text-ink-400">{{ $tickerPost->published_at?->translatedFormat('j M') }}</span>
                                 </a>

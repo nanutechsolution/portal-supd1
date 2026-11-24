@@ -204,7 +204,9 @@ class ManageSettings extends Page
                             ->maxValue(10)
                             ->required(),
                         Toggle::make('breaking_news_enabled')
-                            ->label('Aktifkan breaking news / ticker beranda'),
+                            ->label('Tampilkan ticker "Terkini" di beranda')
+                            ->helperText('Ticker hanya menampilkan berita terbit. Tandai berita sebagai "Breaking News" pada menu Berita agar tampil paling depan.')
+                            ->columnSpanFull(),
                     ]),
             ])
             ->statePath('data');

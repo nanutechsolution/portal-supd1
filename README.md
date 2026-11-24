@@ -44,7 +44,7 @@ visual resmi SUPD I (hijau tua, emas, dan putih).
 
 | Fitur | Keterangan |
 |-------|-----------|
-| Beranda | Rubrik terpilih, sorotan terbaru, dan berita pilihan |
+| Beranda | Rubrik terpilih, ticker “Terkini” dengan prioritas breaking news, sorotan terbaru, dan berita pilihan |
 | Berita & publikasi | Daftar berita per rubrik/satuan kerja, detail artikel, prev/next, terkait, estimasi waktu baca, dan hitung kunjungan |
 | Arsip | Indeks berita per tahun dan bulan |
 | Kategori (rubrik) | Halaman rubrik sesuai bidang kerja direktorat |
@@ -62,7 +62,7 @@ visual resmi SUPD I (hijau tua, emas, dan putih).
 Panel dikelompokkan menjadi tiga grup navigasi:
 
 - **Publikasi**
-  - *Berita* — CRUD lengkap: draf/terbit, terjadwal, preview, berita pilihan (`is_featured`), rubrik, unggahan gambar dengan validasi integritas, workflow publikasi tercatat di audit log
+  - *Berita* — CRUD lengkap: draf/terbit, terjadwal, preview, berita pilihan (`is_featured`), breaking news (`is_breaking`) yang tampil paling depan di ticker “Terkini”, rubrik, unggahan gambar dengan validasi integritas, workflow publikasi tercatat di audit log
   - *Kategori Berita* — kelola rubrik/satuan kerja
   - *Buletin* — unggah edisi buletin (PDF) + deskripsi
   - *Galeri* — manajemen foto dokumentasi

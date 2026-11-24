@@ -27,7 +27,7 @@ class PostSeeder extends Seeder
     private const IMAGES_DIRECTORY = 'posts';
 
     /**
-     * @var array<int, array{title: string, category: string, excerpt: string, content: string, palette: array{int, int, int}[], daysAgo: int, hour: int, featured: bool}>
+     * @var array<int, array{title: string, category: string, excerpt: string, content: string, palette: array{int, int, int}[], daysAgo: int, hour: int, featured: bool, breaking?: bool}>
      */
     private array $posts = [
         [
@@ -39,6 +39,7 @@ class PostSeeder extends Seeder
             'daysAgo' => 2,
             'hour' => 9,
             'featured' => true,
+            'breaking' => true,
         ],
         [
             'title' => 'Monitoring dan Evaluasi Program Lingkungan Hidup di Daerah',
@@ -127,6 +128,7 @@ class PostSeeder extends Seeder
                     'content' => $data['content'],
                     'featured_image' => $imagePath,
                     'is_featured' => $data['featured'],
+                    'is_breaking' => $data['breaking'] ?? false,
                     'status' => 'published',
                     'published_at' => now()->subDays($data['daysAgo'])->setTime($data['hour'], 0),
                 ],

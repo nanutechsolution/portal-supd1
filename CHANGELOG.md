@@ -4,6 +4,17 @@ Seluruh perubahan penting pada Portal Informasi dan Buletin Direktorat SUPD I
 didokumentasikan di berkas ini. Format mengikuti [Keep a Changelog](https://keepachangelog.com/id-ID/1.1.0/)
 dan proyek ini menggunakan [Semantic Versioning](https://semver.org/lang/id/).
 
+## [Unreleased]
+
+### Added
+
+- Breaking news per berita (`is_breaking`): berita yang ditandai tampil paling depan pada ticker “Terkini” di beranda, lengkap dengan label **Breaking**; berita draf/terjadwal tidak ikut tampil
+- Toggle **Breaking News** pada form Berita, kolom indikator di tabel, dan filter daftar berita
+
+### Changed
+
+- Ticker “Terkini” kini memprioritaskan breaking news, lalu diisi berita terbit terbaru; dapat dimatikan dari Pengaturan Website
+
 ## [1.0.0] - 2026-11-16
 
 Rilis awal portal resmi.

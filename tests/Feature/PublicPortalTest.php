@@ -32,6 +32,39 @@ class PublicPortalTest extends TestCase
             ->assertSee('Belum ada berita yang diterbitkan');
     }
 
+    public function test_breaking_news_is_shown_first_in_the_latest_ticker(): void
+    {
+        $regular = Post::factory()->published()->create(['title' => 'Berita Biasa Terbaru']);
+        $breaking = Post::factory()->published()->breaking()->create(['title' => 'Pengumuman Penting Breaking']);
+
+        $home = $this->get('/')->assertOk();
+
+        $ticker = $home->viewData('ticker');
+
+        $this->assertSame($breaking->id, $ticker->first()->id);
+        $this->assertTrue($ticker->first()->is_breaking);
+        $this->assertTrue($ticker->contains($regular));
+    }
+
+    public function test_unpublished_breaking_news_is_hidden_from_the_ticker(): void
+    {
+        $draft = Post::factory()->breaking()->create(['title' => 'Breaking Masih Draf']);
+        $scheduled = Post::factory()->published()->breaking()->create([
+            'title' => 'Breaking Terjadwal',
+            'published_at' => now()->addDay(),
+        ]);
+        Post::factory()->published()->create(['title' => 'Berita Biasa Terbit']);
+
+        $home = $this->get('/')->assertOk();
+        $home->assertDontSee('Breaking Masih Draf')
+            ->assertDontSee('Breaking Terjadwal');
+
+        $ticker = $home->viewData('ticker');
+
+        $this->assertFalse($ticker->contains($draft));
+        $this->assertFalse($ticker->contains($scheduled));
+    }
+
     public function test_published_post_detail_is_accessible(): void
     {
         $post = Post::factory()->published()->create([

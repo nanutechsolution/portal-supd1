@@ -44,6 +44,14 @@ class HomeController extends Controller
             ->limit($homepageCount)
             ->get();
 
+        $ticker = Post::query()
+            ->published()
+            ->with(['category', 'author'])
+            ->orderByDesc('is_breaking')
+            ->latestPublished()
+            ->limit(5)
+            ->get();
+
         $popular = Post::query()
             ->published()
             ->with(['category', 'author'])
@@ -82,6 +90,7 @@ class HomeController extends Controller
             'headline' => $headline,
             'secondary' => $secondary,
             'latest' => $latest,
+            'ticker' => $ticker,
             'popular' => $popular,
             'bulletins' => $bulletins,
             'gallery' => $gallery,

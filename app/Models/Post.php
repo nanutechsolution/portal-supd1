@@ -22,6 +22,7 @@ use Illuminate\Support\Str;
     'content',
     'featured_image',
     'is_featured',
+    'is_breaking',
     'status',
     'published_at',
 ])]
@@ -37,6 +38,7 @@ class Post extends Model
     {
         return [
             'is_featured' => 'boolean',
+            'is_breaking' => 'boolean',
             'status' => PostStatus::class,
             'published_at' => 'datetime',
         ];
@@ -122,6 +124,14 @@ class Post extends Model
     public function scopeFeatured(Builder $query): void
     {
         $query->where('is_featured', true);
+    }
+
+    /**
+     * @param  Builder<Post>  $query
+     */
+    public function scopeBreaking(Builder $query): void
+    {
+        $query->where('is_breaking', true);
     }
 
     /**

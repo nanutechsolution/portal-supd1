@@ -29,6 +29,7 @@ class PostFactory extends Factory
             'content' => collect(fake()->paragraphs(4))->map(fn (string $paragraph): string => "<p>{$paragraph}</p>")->implode(''),
             'featured_image' => null,
             'is_featured' => false,
+            'is_breaking' => false,
             'status' => PostStatus::Draft,
             'published_at' => null,
         ];
@@ -46,6 +47,13 @@ class PostFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'is_featured' => true,
+        ]);
+    }
+
+    public function breaking(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'is_breaking' => true,
         ]);
     }
 }
