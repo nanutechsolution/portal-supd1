@@ -107,7 +107,7 @@ class PublicHeaderTest extends TestCase
         $this->assertTrue($directoratePosition < $ministryLine1Position);
         $this->assertTrue($ministryLine1Position < $ministryLine2Position);
 
-        $this->assertStringContainsString('text-xs font-normal leading-tight text-ink-600', $header);
+        $this->assertStringContainsString('text-sm font-bold leading-tight text-ink-600', $header);
         $this->assertStringContainsString('text-sm font-bold leading-tight text-ink-800', $header);
         $this->assertStringContainsString('eyebrow mt-1 block text-accent-600', $header);
         $this->assertStringNotContainsString('items-baseline', $header);

@@ -2,21 +2,38 @@
 
 namespace Tests\Feature;
 
+use App\Enums\OrganizationalLevel;
 use App\Filament\Resources\OrganizationalUnits\Pages\CreateOrganizationalUnit;
 use App\Filament\Resources\OrganizationalUnits\Pages\EditOrganizationalUnit;
 use App\Models\OrganizationalUnit;
+use App\Models\Setting;
 use App\Models\User;
 use App\Support\MediaIntegrityGuard;
-use Database\Seeders\OrganizationalUnitSeeder;
+use Database\Seeders\OrganizationalStructureSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Livewire\Livewire;
 use Tests\TestCase;
 
 class OrganizationalStructureTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        Setting::flushCache();
+    }
+
+    protected function tearDown(): void
+    {
+        Setting::flushCache();
+
+        parent::tearDown();
+    }
 
     public function test_public_structure_page_shows_empty_state_without_published_units(): void
     {
@@ -54,23 +71,28 @@ class OrganizationalStructureTest extends TestCase
             'parent_id' => $unpublished->id,
         ]);
 
-        $this->get(route('structure.index'))
+        $response = $this->get(route('structure.index'))
             ->assertOk()
             ->assertSeeInOrder(['Subbagian Tata Usaha', 'Subdirektorat Lingkungan Hidup'])
             ->assertSee('Nama Pejabat Uji')
-            ->assertSee('Nama pejabat belum tersedia.')
+            ->assertSee('org-card__position', false)
+            ->assertSee('org-card__fallback', false)
+            ->assertDontSee('Nama pejabat belum tersedia.')
             ->assertDontSee($inactive->name)
             ->assertDontSee($unpublished->name)
             ->assertDontSee($orphan->name);
+
+        $this->assertSame(2, substr_count($response->getContent(), 'class="org-card '));
     }
 
-    public function test_public_structure_page_renders_photo_and_responsive_markup(): void
+    public function test_public_structure_page_renders_photo_and_scrollable_chart_markup(): void
     {
         Storage::fake('public');
         Storage::disk('public')->put('structure/pejabat.jpg', 'foto');
 
         $root = OrganizationalUnit::factory()->create([
             'name' => 'Subdirektorat Kehutanan',
+            'official_name' => 'Pejabat Berfoto',
             'photo' => 'structure/pejabat.jpg',
         ]);
         OrganizationalUnit::factory()->create([
@@ -78,13 +100,141 @@ class OrganizationalStructureTest extends TestCase
             'parent_id' => $root->id,
         ]);
 
-        $response = $this->get(route('structure.index'))
+        $this->get(route('structure.index'))
             ->assertOk()
             ->assertSee('storage/structure/pejabat.jpg', false)
-            ->assertSee('Unit bawahan');
+            ->assertSee('alt="Foto Pejabat Berfoto"', false)
+            ->assertSee('org-chart__scroll', false)
+            ->assertSee('org-chart__canvas', false)
+            ->assertSee('aria-label="Bagan struktur organisasi', false)
+            ->assertSee('tabindex="0"', false)
+            ->assertDontSee('Unit bawahan');
+    }
 
-        $this->assertStringContainsString('sm:flex-row', $response->getContent());
-        $this->assertStringContainsString('border-l-2', $response->getContent());
+    public function test_public_chart_uses_a_card_variant_and_photo_rule_for_each_level(): void
+    {
+        Storage::fake('public');
+        Storage::disk('public')->put('structure/fungsional.jpg', 'foto');
+
+        $root = OrganizationalUnit::factory()->create([
+            'name' => 'Direktur Uji',
+            'official_name' => 'Rahmat Uji',
+            'level' => OrganizationalLevel::Pimpinan,
+            'sort_order' => 1,
+        ]);
+        $kabag = OrganizationalUnit::factory()->create([
+            'name' => 'Kepala Bagian Uji',
+            'official_name' => 'Sinta Uji',
+            'level' => OrganizationalLevel::KepalaBagian,
+            'parent_id' => $root->id,
+            'sort_order' => 10,
+        ]);
+        OrganizationalUnit::factory()->create([
+            'name' => 'Kepala Subbagian Uji',
+            'level' => OrganizationalLevel::Kasubbag,
+            'parent_id' => $kabag->id,
+            'sort_order' => 10,
+        ]);
+        $kapokja = OrganizationalUnit::factory()->create([
+            'name' => 'Kepala Kelompok Kerja Uji',
+            'official_name' => 'Dewi Uji',
+            'level' => OrganizationalLevel::Kapokja,
+            'parent_id' => $root->id,
+            'sort_order' => 20,
+        ]);
+        OrganizationalUnit::factory()->create([
+            'name' => 'Ketua Tim Uji',
+            'official_name' => 'Andi Uji',
+            'level' => OrganizationalLevel::Katim,
+            'parent_id' => $kapokja->id,
+            'sort_order' => 10,
+        ]);
+        OrganizationalUnit::factory()->create([
+            'name' => 'Jabatan Fungsional Uji',
+            'official_name' => 'Bagus Uji',
+            'level' => OrganizationalLevel::Fungsional,
+            'photo' => 'structure/fungsional.jpg',
+            'parent_id' => $root->id,
+            'sort_order' => 30,
+        ]);
+
+        $response = $this->get(route('structure.index'))
+            ->assertOk()
+            ->assertSeeInOrder([
+                'org-card--leader',
+                'org-card--section',
+                'org-card--subsection',
+                'org-card--work-group',
+                'org-card--team',
+                'org-card--functional',
+            ], false)
+            ->assertSee('Rahmat Uji')
+            ->assertSee('Sinta Uji')
+            ->assertSee('Dewi Uji')
+            ->assertSee('Andi Uji')
+            ->assertSee('Bagus Uji')
+            ->assertSee('>RU</span>', false)
+            ->assertSee('>KS</span>', false)
+            ->assertDontSee('storage/structure/fungsional.jpg', false);
+
+        $content = (string) $response->getContent();
+
+        foreach (['leader', 'section', 'subsection', 'work-group', 'team', 'functional'] as $variant) {
+            $this->assertSame(1, substr_count($content, 'org-card--'.$variant), "Variant {$variant} tidak muncul tepat satu kali.");
+        }
+
+        $this->assertSame(5, substr_count($content, 'org-card__media'));
+        $this->assertSame(5, substr_count($content, 'org-card__fallback'));
+    }
+
+    public function test_units_without_a_position_are_skipped_and_their_children_are_promoted(): void
+    {
+        $placeholder = OrganizationalUnit::factory()->create([
+            'name' => '',
+            'level' => OrganizationalLevel::Pimpinan,
+        ]);
+        OrganizationalUnit::factory()->create([
+            'name' => 'Kepala Bagian Diangkat',
+            'official_name' => 'Pejabat Diangkat',
+            'level' => OrganizationalLevel::KepalaBagian,
+            'parent_id' => $placeholder->id,
+        ]);
+
+        $response = $this->get(route('structure.index'))
+            ->assertOk()
+            ->assertSee('Kepala Bagian Diangkat')
+            ->assertSee('Pejabat Diangkat');
+
+        $this->assertSame(1, substr_count($response->getContent(), 'class="org-card '));
+        $this->assertStringNotContainsString('org-card--leader', $response->getContent());
+    }
+
+    public function test_chart_heading_and_watermark_follow_site_identity_settings(): void
+    {
+        Setting::putMany([
+            'site_ministry_line2' => 'Kementerian Uji',
+            'site_directorate' => 'Direktorat Uji Coba',
+            'site_ministry_line1' => 'Direktorat Jenderal Uji',
+            'site_short_name' => 'DUJI',
+        ]);
+
+        OrganizationalUnit::factory()->create(['name' => 'Pimpinan Uji']);
+
+        $html = (string) $this->get(route('structure.index'))->assertOk()->getContent();
+        $chart = Str::between($html, '<section class="org-chart"', '</section>');
+
+        $this->assertStringContainsString('org-chart__institution">Kementerian Uji', $chart);
+        $this->assertStringContainsString('org-chart__title">Direktorat Uji Coba', $chart);
+        $this->assertStringContainsString('org-chart__subtitle">Direktorat Jenderal Uji', $chart);
+        $this->assertStringContainsString('org-chart__watermark" aria-hidden="true">DUJI', $chart);
+
+        Setting::putMany(['site_ministry_line1' => '']);
+
+        $html = (string) $this->get(route('structure.index'))->assertOk()->getContent();
+        $chart = Str::between($html, '<section class="org-chart"', '</section>');
+
+        $this->assertStringContainsString('org-chart__institution">Kementerian Uji', $chart);
+        $this->assertStringNotContainsString('org-chart__subtitle', $chart);
     }
 
     public function test_administrator_can_create_an_organizational_unit(): void
@@ -97,6 +247,7 @@ class OrganizationalStructureTest extends TestCase
             ->fillForm([
                 'name' => 'Subdirektorat Pertanian Pangan',
                 'official_name' => 'Nama Pejabat Uji',
+                'level' => OrganizationalLevel::KepalaBagian->value,
                 'parent_id' => $parent->id,
                 'sort_order' => 30,
                 'description' => 'Deskripsi tugas unit uji.',
@@ -109,6 +260,7 @@ class OrganizationalStructureTest extends TestCase
         $this->assertDatabaseHas('organizational_units', [
             'name' => 'Subdirektorat Pertanian Pangan',
             'official_name' => 'Nama Pejabat Uji',
+            'level' => OrganizationalLevel::KepalaBagian->value,
             'parent_id' => $parent->id,
             'sort_order' => 30,
             'is_active' => true,
@@ -127,6 +279,7 @@ class OrganizationalStructureTest extends TestCase
             ->fillForm([
                 'name' => 'Nama Setelah Diedit',
                 'official_name' => 'Pejabat Setelah Diedit',
+                'level' => OrganizationalLevel::Kapokja->value,
                 'parent_id' => $parent->id,
                 'sort_order' => 99,
                 'description' => 'Deskripsi baru.',
@@ -140,6 +293,7 @@ class OrganizationalStructureTest extends TestCase
 
         $this->assertSame('Nama Setelah Diedit', $unit->name);
         $this->assertSame('Pejabat Setelah Diedit', $unit->official_name);
+        $this->assertSame(OrganizationalLevel::Kapokja, $unit->level);
         $this->assertSame($parent->id, $unit->parent_id);
         $this->assertSame(99, $unit->sort_order);
         $this->assertFalse($unit->is_active);
@@ -282,6 +436,7 @@ class OrganizationalStructureTest extends TestCase
             ->test(CreateOrganizationalUnit::class)
             ->fillForm([
                 'name' => 'Unit Dengan Foto',
+                'level' => OrganizationalLevel::KepalaBagian->value,
                 'photo' => [UploadedFile::fake()->image('pejabat.jpg', 600, 600)],
             ])
             ->call('create')
@@ -405,34 +560,106 @@ class OrganizationalStructureTest extends TestCase
 
         Livewire::actingAs($editor)
             ->test(CreateOrganizationalUnit::class)
-            ->fillForm(['name' => 'Unit Dibuat Editor'])
+            ->fillForm([
+                'name' => 'Unit Dibuat Editor',
+                'level' => OrganizationalLevel::Katim->value,
+            ])
             ->call('create')
             ->assertHasNoFormErrors();
 
         $this->assertDatabaseHas('organizational_units', ['name' => 'Unit Dibuat Editor']);
     }
 
-    public function test_seeder_stores_the_reference_units_without_assuming_a_hierarchy(): void
+    public function test_seeder_builds_one_idempotent_hierarchy_with_levels(): void
     {
-        $this->seed(OrganizationalUnitSeeder::class);
+        Storage::fake('public');
 
-        $units = OrganizationalUnit::query()->orderBy('sort_order')->get();
+        $legacyRoot = OrganizationalUnit::factory()->create(['name' => 'Jokowi']);
+        OrganizationalUnit::factory()->create([
+            'name' => 'Subdirektorat Pertanian Pangan',
+            'parent_id' => $legacyRoot->id,
+        ]);
 
-        $this->assertCount(8, $units);
+        $this->seed(OrganizationalStructureSeeder::class);
+        $this->seed(OrganizationalStructureSeeder::class);
+
+        $units = OrganizationalUnit::query()->get();
+
+        $this->assertCount(13, $units);
+        $this->assertSame(1, $units->whereNull('parent_id')->count());
+        $this->assertSame(0, $units->whereNull('parent_id')->where('is_published', false)->count());
+        $this->assertSame(0, $units->where('name', 'Jokowi')->count());
+        $this->assertSame(0, $units->where('name', 'Subdirektorat Pertanian Pangan')->count());
+
+        $this->assertTrue($units->every(fn (OrganizationalUnit $unit): bool => $unit->level instanceof OrganizationalLevel));
+        $this->assertTrue($units->every(fn (OrganizationalUnit $unit): bool => filled($unit->official_name)));
+        $this->assertTrue($units->every(fn (OrganizationalUnit $unit): bool => $unit->is_active && $unit->is_published));
+
+        $pimpinan = $units->firstWhere('name', 'Direktur Sinkronisasi Urusan Pemerintahan Daerah I');
+        $kabag = $units->firstWhere('name', 'Kepala Bagian Tata Usaha');
+        $kasubbag = $units->firstWhere('name', 'Kepala Subbagian Tata Usaha');
+        $fungsional = $units->firstWhere('level', OrganizationalLevel::Fungsional);
+
+        $this->assertInstanceOf(OrganizationalUnit::class, $pimpinan);
+        $this->assertInstanceOf(OrganizationalUnit::class, $kabag);
+        $this->assertInstanceOf(OrganizationalUnit::class, $kasubbag);
+        $this->assertInstanceOf(OrganizationalUnit::class, $fungsional);
+
+        $this->assertSame(OrganizationalLevel::Pimpinan, $pimpinan->level);
+        $this->assertNull($pimpinan->parent_id);
+        $this->assertSame(OrganizationalLevel::KepalaBagian, $kabag->level);
+        $this->assertSame($pimpinan->id, $kabag->parent_id);
+        $this->assertSame(OrganizationalLevel::Kasubbag, $kasubbag->level);
+        $this->assertSame($kabag->id, $kasubbag->parent_id);
+        $this->assertNull($fungsional->photo);
+
+        $kapokjas = $units->where('level', OrganizationalLevel::Kapokja);
+
+        $this->assertCount(3, $kapokjas);
+
+        foreach ($kapokjas as $kapokja) {
+            $this->assertSame($pimpinan->id, $kapokja->parent_id);
+            $this->assertCount(2, $kapokja->visibleChildren);
+            $this->assertTrue($kapokja->visibleChildren->every(
+                fn (OrganizationalUnit $unit): bool => $unit->level === OrganizationalLevel::Katim,
+            ));
+        }
+    }
+
+    public function test_level_enum_and_legacy_fallbacks_are_available_for_the_public_chart(): void
+    {
+        Storage::fake('public');
+        Storage::disk('public')->put('structure/fungsional.jpg', 'foto');
+
+        $fungsional = OrganizationalUnit::factory()->create([
+            'name' => 'Jabatan Fungsional Perencana',
+            'official_name' => 'Dr. Bagus Prakoso',
+            'level' => null,
+            'photo' => 'structure/fungsional.jpg',
+        ]);
+        $katim = OrganizationalUnit::factory()->create([
+            'name' => 'Ketua Tim Anggaran',
+            'level' => null,
+        ]);
+        $pimpinan = OrganizationalUnit::factory()->create([
+            'name' => 'Unit Puncak',
+            'level' => null,
+        ]);
+
+        $this->assertSame(OrganizationalLevel::Fungsional, $fungsional->resolvedLevel());
+        $this->assertFalse($fungsional->resolvedLevel()->hasPhoto());
+        $this->assertNull($fungsional->cardPhotoUrl());
+        $this->assertSame('BP', $fungsional->initials());
+        $this->assertSame(OrganizationalLevel::Katim, $katim->resolvedLevel());
+        $this->assertSame(OrganizationalLevel::Pimpinan, $pimpinan->resolvedLevel());
+
         $this->assertSame([
-            'Subbagian Tata Usaha',
-            'Subdirektorat Pertanian Pangan',
-            'Subdirektorat Lingkungan Hidup',
-            'Subdirektorat Kehutanan',
-            'Subdirektorat Pertanahan dan Penataan Ruang',
-            'Subdirektorat Pertanian dan Pangan',
-            'Substansi Energi Sumber Daya dan Mineral',
-            'Substansi Koordinasi Kewilayahan dan Perubahan Iklim',
-        ], $units->pluck('name')->all());
-
-        $this->assertTrue($units->every(fn (OrganizationalUnit $unit): bool => $unit->parent_id === null));
-        $this->assertTrue($units->every(fn (OrganizationalUnit $unit): bool => $unit->official_name === null));
-        $this->assertTrue($units->every(fn (OrganizationalUnit $unit): bool => $unit->photo === null));
-        $this->assertTrue($units->every(fn (OrganizationalUnit $unit): bool => $unit->is_published === false));
+            'pimpinan' => 'Pimpinan',
+            'kepala_bagian' => 'Kepala Bagian',
+            'fungsional' => 'Jabatan Fungsional',
+            'kasubbag' => 'Kepala Subbagian',
+            'kapokja' => 'Kepala Kelompok Kerja',
+            'katim' => 'Ketua Tim',
+        ], OrganizationalLevel::options());
     }
 }
