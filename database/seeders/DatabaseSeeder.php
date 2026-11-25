@@ -16,9 +16,8 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class,
             CategorySeeder::class,
             PageSeeder::class,
-            OrganizationalUnitSeeder::class,
             OrganizationalStructureSeeder::class,
-            PostSeeder::class,
+            // PostSeeder::class,
         ]);
     }
 }

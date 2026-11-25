@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\OrganizationalLevel;
 use App\Models\OrganizationalUnit;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -20,6 +21,7 @@ class OrganizationalUnitFactory extends Factory
         return [
             'name' => 'Unit '.fake()->unique()->words(3, true),
             'official_name' => null,
+            'level' => OrganizationalLevel::Pimpinan,
             'photo' => null,
             'parent_id' => null,
             'sort_order' => fake()->numberBetween(1, 50),
@@ -27,6 +29,13 @@ class OrganizationalUnitFactory extends Factory
             'is_active' => true,
             'is_published' => true,
         ];
+    }
+
+    public function withLevel(OrganizationalLevel $level): static
+    {
+        return $this->state(fn (array $attributes): array => [
+            'level' => $level,
+        ]);
     }
 
     public function inactive(): static

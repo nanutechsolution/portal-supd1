@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\OrganizationalLevel;
 use App\Support\MediaFiles;
 use Database\Factories\OrganizationalUnitFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -12,6 +13,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 /**
  * A position or work unit inside the directorate hierarchy.
@@ -23,6 +25,7 @@ use Illuminate\Support\Facades\Storage;
 #[Fillable([
     'name',
     'official_name',
+    'level',
     'photo',
     'parent_id',
     'sort_order',
@@ -41,6 +44,7 @@ class OrganizationalUnit extends Model
     protected function casts(): array
     {
         return [
+            'level' => OrganizationalLevel::class,
             'is_active' => 'boolean',
             'is_published' => 'boolean',
         ];
@@ -199,5 +203,88 @@ class OrganizationalUnit extends Model
         }
 
         return Storage::disk('public')->url($this->photo);
+    }
+
+    public function cardPhotoUrl(): ?string
+    {
+        if ($this->resolvedLevel()?->hasPhoto() === false) {
+            return null;
+        }
+
+        return $this->photoUrl();
+    }
+
+    /**
+     * Level yang dipakai bagan. Kolom `level` tetap menjadi sumber utama;
+     * nama jabatan hanya menjadi cadangan untuk data lama yang belum terisi.
+     */
+    public function resolvedLevel(): ?OrganizationalLevel
+    {
+        $level = $this->getAttribute('level');
+
+        if ($level instanceof OrganizationalLevel) {
+            return $level;
+        }
+
+        $name = Str::lower(trim((string) $this->name));
+
+        return match (true) {
+            str_contains($name, 'fungsional') => OrganizationalLevel::Fungsional,
+            str_contains($name, 'katim'), str_contains($name, 'ketua tim') => OrganizationalLevel::Katim,
+            str_contains($name, 'kapokja'), str_contains($name, 'kelompok kerja') => OrganizationalLevel::Kapokja,
+            str_contains($name, 'subbagian'), str_contains($name, 'sub bagian') => OrganizationalLevel::Kasubbag,
+            str_contains($name, 'kepala bagian'),
+            str_contains($name, 'subdirektorat'),
+            str_contains($name, 'substansi') => OrganizationalLevel::KepalaBagian,
+            str_contains($name, 'direktur') => OrganizationalLevel::Pimpinan,
+            $this->parent_id === null => OrganizationalLevel::Pimpinan,
+            default => null,
+        };
+    }
+
+    public function hasPosition(): bool
+    {
+        return filled($this->name);
+    }
+
+    public function positionTitle(): string
+    {
+        return trim((string) $this->name);
+    }
+
+    public function personName(): ?string
+    {
+        $name = trim((string) $this->official_name);
+
+        return $name !== '' ? $name : null;
+    }
+
+    /**
+     * Inisial untuk kartu tanpa foto. Nama pejabat dipakai lebih dulu,
+     * kemudian nama jabatan sebagai cadangan.
+     */
+    public function initials(int $limit = 2): string
+    {
+        $source = $this->personName() ?? $this->positionTitle();
+
+        $normalized = preg_replace('/[^\p{L}\p{N}\s]/u', ' ', $source) ?? '';
+        $words = preg_split('/\s+/u', trim($normalized)) ?: [];
+        $ignored = ['dr', 'drs', 'dra', 'ir', 'prof', 'h', 'hj'];
+
+        $words = array_values(array_filter(
+            $words,
+            fn (string $word): bool => ! in_array(mb_strtolower($word), $ignored, true),
+        ));
+
+        if ($words === []) {
+            return '';
+        }
+
+        $selected = array_slice($words, 0, max(1, $limit));
+
+        return implode('', array_map(
+            fn (string $word): string => mb_strtoupper(mb_substr($word, 0, 1)),
+            $selected,
+        ));
     }
 }

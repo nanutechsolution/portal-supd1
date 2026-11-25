@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\OrganizationalUnits;
 
+use App\Enums\OrganizationalLevel;
 use App\Filament\Resources\OrganizationalUnits\Pages\CreateOrganizationalUnit;
 use App\Filament\Resources\OrganizationalUnits\Pages\EditOrganizationalUnit;
 use App\Filament\Resources\OrganizationalUnits\Pages\ListOrganizationalUnits;
@@ -64,6 +65,13 @@ class OrganizationalUnitResource extends Resource
                         ->label('Nama pejabat')
                         ->maxLength(150)
                         ->helperText('Kosongkan jika nama pejabat belum tersedia atau belum dikonfirmasi.'),
+                    Select::make('level')
+                        ->label('Level jabatan')
+                        ->options(OrganizationalLevel::options())
+                        ->required()
+                        ->native(false)
+                        ->placeholder('Pilih level jabatan')
+                        ->helperText('Menentukan warna dan bentuk kartu pada bagan publik.'),
                     Select::make('parent_id')
                         ->label('Atasan / unit induk')
                         ->options(fn (?OrganizationalUnit $record): array => OrganizationalUnit::query()
@@ -139,6 +147,13 @@ class OrganizationalUnitResource extends Resource
                     ->label('Pejabat')
                     ->placeholder('Belum diisi')
                     ->searchable(),
+                TextColumn::make('level')
+                    ->label('Level')
+                    ->badge()
+                    ->placeholder('Belum diisi')
+                    ->formatStateUsing(fn (?OrganizationalLevel $state): string => $state?->label() ?? 'Belum diisi')
+                    ->color(fn (?OrganizationalLevel $state): string => $state?->color() ?? 'gray')
+                    ->sortable(),
                 TextColumn::make('parent.name')
                     ->label('Atasan')
                     ->placeholder('—')
@@ -164,6 +179,9 @@ class OrganizationalUnitResource extends Resource
             ])
             ->defaultSort('sort_order')
             ->filters([
+                SelectFilter::make('level')
+                    ->label('Level jabatan')
+                    ->options(OrganizationalLevel::options()),
                 SelectFilter::make('parent_id')
                     ->label('Unit induk')
                     ->relationship('parent', 'name')

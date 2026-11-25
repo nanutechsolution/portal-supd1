@@ -2,22 +2,25 @@
 
 namespace Database\Seeders;
 
+use App\Enums\OrganizationalLevel;
 use App\Models\OrganizationalUnit;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Storage;
 use RuntimeException;
 
 /**
- * Struktur organisasi contoh beserta foto (avatar monogram) untuk setiap
- * jabatan.
+ * Struktur organisasi contoh untuk bagan publik Direktorat SUPD I.
  *
- * Hierarki: Direktur (root) → 7 unit langsung di bawahnya (Subbagian,
- * 6 Subdirektorat/Substansi). Gambar dibuat dengan GD dan disimpan ke disk
- * `public` pada direktori `structure/` — tidak bergantung berkas eksternal.
+ * Hierarki: Direktur → Kepala Bagian Tata Usaha (dengan Kasubbag Tata Usaha),
+ * tiga Kepala Kelompok Kerja, dan Jabatan Fungsional. Setiap Kapokja memiliki
+ * dua Ketua Tim. Semua nama pejabat adalah fiktif dan hanya dipakai sebagai
+ * data contoh.
  *
- * Seluruh nama pejabat bersifat contoh dan identitas personel TIDAK
- * di-generate agar tidak disalahartikan sebagai data nyata; hanya jabatan
- * yang diisi. Seeder bersifat idempotent (kunci update: nama unit).
+ * Seeder ini menggabungkan seluruh data struktur ke dalam satu alur yang
+ * idempotent. Unit contoh versi lama dibersihkan lebih dulu agar tidak ada
+ * unit orphan atau duplikat yang tertinggal. Foto contoh dibuat sebagai
+ * monogram dan disimpan di disk `public`; Jabatan Fungsional sengaja tidak
+ * memiliki foto sesuai desain bagan.
  */
 class OrganizationalStructureSeeder extends Seeder
 {
@@ -26,105 +29,201 @@ class OrganizationalStructureSeeder extends Seeder
      */
     private const PHOTO_DIRECTORY = 'structure';
 
+    private const PHOTO_WIDTH = 480;
+
+    private const PHOTO_HEIGHT = 600;
+
     /**
-     * @var array<int, array{key: string, name: string, official_name: string, acronym: string, palette: array{int, int, int}[], parent: ?string, sort_order: int, description: string}>
+     * Nama unit dari seeder versi sebelumnya yang harus dibersihkan.
+     *
+     * @var array<int, string>
+     */
+    private array $legacyNames = [
+        'Jokowi',
+        'Direktur',
+        'Subbagian Tata Usaha',
+        'Subdirektorat Pertanian Pangan',
+        'Subdirektorat Lingkungan Hidup',
+        'Subdirektorat Kehutanan',
+        'Subdirektorat Pertanahan dan Penataan Ruang',
+        'Subdirektorat Pertanian dan Pangan',
+        'Substansi Energi Sumber Daya dan Mineral',
+        'Substansi Koordinasi Kewilayahan dan Perubahan Iklim',
+    ];
+
+    /**
+     * @var array<int, array{
+     *     key: string,
+     *     name: string,
+     *     official_name: string,
+     *     level: OrganizationalLevel,
+     *     acronym: string,
+     *     palette: array<int, array{int, int, int}>,
+     *     parent: ?string,
+     *     sort_order: int,
+     *     description: string
+     * }>
      */
     private array $units = [
         [
-            'key' => 'direktur',
-            'name' => 'Direktur',
-            'official_name' => 'Direktur Sinkronisasi Urusan Pemerintahan Daerah I',
+            'key' => 'pimpinan',
+            'name' => 'Direktur Sinkronisasi Urusan Pemerintahan Daerah I',
+            'official_name' => 'Rahmat Hidayat',
+            'level' => OrganizationalLevel::Pimpinan,
             'acronym' => 'DIR',
             'palette' => [[11, 40, 54], [38, 70, 80]],
             'parent' => null,
             'sort_order' => 1,
-            'description' => 'Contoh bagan struktur organisasi dari seeder; hubungan atasan–bawahan dan pengisian pejabat dilengkapi administrator.',
+            'description' => 'Pimpinan tertinggi Direktorat Sinkronisasi Urusan Pemerintahan Daerah I. Data contoh.',
         ],
         [
-            'key' => 'tata-usaha',
-            'name' => 'Subbagian Tata Usaha',
-            'official_name' => 'Kepala Subbagian Tata Usaha',
-            'acronym' => 'TU',
-            'palette' => [[38, 70, 80], [70, 111, 128]],
-            'parent' => 'direktur',
+            'key' => 'kabag-tu',
+            'name' => 'Kepala Bagian Tata Usaha',
+            'official_name' => 'Sinta Maharani',
+            'level' => OrganizationalLevel::KepalaBagian,
+            'acronym' => 'KABAG',
+            'palette' => [[70, 28, 92], [122, 48, 137]],
+            'parent' => 'pimpinan',
             'sort_order' => 10,
-            'description' => 'Urusan ketatausahaan, kepegawaian, keuangan, dan kepegawaian direktorat. Contoh struktur.',
+            'description' => 'Mengoordinasikan ketatausahaan, kepegawaian, keuangan, dan rumah tangga direktorat. Data contoh.',
         ],
         [
-            'key' => 'pertanian-pangan',
-            'name' => 'Subdirektorat Pertanian dan Pangan',
-            'official_name' => 'Kepala Subdirektorat Pertanian dan Pangan',
-            'acronym' => 'SPP',
-            'palette' => [[15, 73, 50], [35, 118, 90]],
-            'parent' => 'direktur',
-            'sort_order' => 20,
-            'description' => 'Sinkronisasi urusan pemerintahan daerah di bidang pertanian dan pangan. Contoh struktur.',
+            'key' => 'kasubbag-tu',
+            'name' => 'Kepala Subbagian Tata Usaha',
+            'official_name' => 'Nadia Puspita',
+            'level' => OrganizationalLevel::Kasubbag,
+            'acronym' => 'TU',
+            'palette' => [[126, 60, 31], [177, 82, 45]],
+            'parent' => 'kabag-tu',
+            'sort_order' => 10,
+            'description' => 'Mengelola urusan tata usaha, surat-menyurat, arsip, dan layanan administrasi direktorat. Data contoh.',
         ],
         [
-            'key' => 'lingkungan-hidup',
-            'name' => 'Subdirektorat Lingkungan Hidup',
-            'official_name' => 'Kepala Subdirektorat Lingkungan Hidup',
-            'acronym' => 'SLH',
-            'palette' => [[11, 78, 93], [20, 116, 139]],
-            'parent' => 'direktur',
+            'key' => 'kapokja-perencanaan',
+            'name' => 'Kepala Kelompok Kerja Perencanaan dan Pelaporan',
+            'official_name' => 'Dewi Lestari',
+            'level' => OrganizationalLevel::Kapokja,
+            'acronym' => 'REN',
+            'palette' => [[116, 59, 26], [164, 91, 38]],
+            'parent' => 'pimpinan',
             'sort_order' => 30,
-            'description' => 'Sinkronisasi urusan pemerintahan daerah di bidang lingkungan hidup. Contoh struktur.',
+            'description' => 'Menyiapkan perencanaan program, anggaran kerja, evaluasi, dan pelaporan kinerja direktorat. Data contoh.',
         ],
         [
-            'key' => 'kehutanan',
-            'name' => 'Subdirektorat Kehutanan',
-            'official_name' => 'Kepala Subdirektorat Kehutanan',
-            'acronym' => 'SKH',
-            'palette' => [[88, 58, 32], [141, 94, 57]],
-            'parent' => 'direktur',
+            'key' => 'katim-perencanaan-program',
+            'name' => 'Ketua Tim Perencanaan Program',
+            'official_name' => 'Andi Nugraha',
+            'level' => OrganizationalLevel::Katim,
+            'acronym' => 'RENPRO',
+            'palette' => [[24, 81, 50], [41, 128, 75]],
+            'parent' => 'kapokja-perencanaan',
+            'sort_order' => 10,
+            'description' => 'Menyusun rencana program dan kegiatan tahunan direktorat. Data contoh.',
+        ],
+        [
+            'key' => 'katim-evaluasi-kinerja',
+            'name' => 'Ketua Tim Evaluasi dan Pelaporan Kinerja',
+            'official_name' => 'Maya Kartika',
+            'level' => OrganizationalLevel::Katim,
+            'acronym' => 'EVAL',
+            'palette' => [[24, 81, 50], [41, 128, 75]],
+            'parent' => 'kapokja-perencanaan',
+            'sort_order' => 20,
+            'description' => 'Mengumpulkan data capaian dan menyusun laporan kinerja direktorat. Data contoh.',
+        ],
+        [
+            'key' => 'kapokja-keuangan',
+            'name' => 'Kepala Kelompok Kerja Keuangan dan Aset',
+            'official_name' => 'Rizky Ramadhan',
+            'level' => OrganizationalLevel::Kapokja,
+            'acronym' => 'KEU',
+            'palette' => [[116, 59, 26], [164, 91, 38]],
+            'parent' => 'pimpinan',
             'sort_order' => 40,
-            'description' => 'Sinkronisasi urusan pemerintahan daerah di bidang kehutanan. Contoh struktur.',
+            'description' => 'Mengelola anggaran, pembayaran, akuntansi, serta aset dan barang milik negara direktorat. Data contoh.',
         ],
         [
-            'key' => 'pertanahan',
-            'name' => 'Subdirektorat Pertanahan dan Penataan Ruang',
-            'official_name' => 'Kepala Subdirektorat Pertanahan dan Penataan Ruang',
-            'acronym' => 'SPR',
-            'palette' => [[87, 70, 23], [143, 116, 47]],
-            'parent' => 'direktur',
+            'key' => 'katim-anggaran',
+            'name' => 'Ketua Tim Anggaran',
+            'official_name' => 'Intan Permata',
+            'level' => OrganizationalLevel::Katim,
+            'acronym' => 'ANG',
+            'palette' => [[24, 81, 50], [41, 128, 75]],
+            'parent' => 'kapokja-keuangan',
+            'sort_order' => 10,
+            'description' => 'Menyusun rencana anggaran dan memantau realisasi belanja direktorat. Data contoh.',
+        ],
+        [
+            'key' => 'katim-aset',
+            'name' => 'Ketua Tim Aset dan Barang Milik Negara',
+            'official_name' => 'Fajar Setiawan',
+            'level' => OrganizationalLevel::Katim,
+            'acronym' => 'BMN',
+            'palette' => [[24, 81, 50], [41, 128, 75]],
+            'parent' => 'kapokja-keuangan',
+            'sort_order' => 20,
+            'description' => 'Menata administrasi aset dan barang milik negara di lingkungan direktorat. Data contoh.',
+        ],
+        [
+            'key' => 'kapokja-umum',
+            'name' => 'Kepala Kelompok Kerja Umum dan Kepegawaian',
+            'official_name' => 'Bima Saputra',
+            'level' => OrganizationalLevel::Kapokja,
+            'acronym' => 'UMUM',
+            'palette' => [[116, 59, 26], [164, 91, 38]],
+            'parent' => 'pimpinan',
             'sort_order' => 50,
-            'description' => 'Sinkronisasi urusan pemerintahan daerah di bidang pertanahan dan penataan ruang. Contoh struktur.',
+            'description' => 'Mengelola kepegawaian, rumah tangga, protokol, dan layanan umum direktorat. Data contoh.',
         ],
         [
-            'key' => 'energi',
-            'name' => 'Substansi Energi Sumber Daya dan Mineral',
-            'official_name' => 'Kepala Substansi Energi Sumber Daya dan Mineral',
-            'acronym' => 'ESM',
-            'palette' => [[62, 56, 24], [126, 109, 47]],
-            'parent' => 'direktur',
-            'sort_order' => 60,
-            'description' => 'Sinkronisasi urusan pemerintahan daerah di bidang energi dan sumber daya mineral. Contoh struktur.',
+            'key' => 'katim-kepegawaian',
+            'name' => 'Ketua Tim Kepegawaian',
+            'official_name' => 'Ayu Wulandari',
+            'level' => OrganizationalLevel::Katim,
+            'acronym' => 'KEP',
+            'palette' => [[24, 81, 50], [41, 128, 75]],
+            'parent' => 'kapokja-umum',
+            'sort_order' => 10,
+            'description' => 'Mengelola administrasi kepegawaian dan pengembangan sumber daya manusia direktorat. Data contoh.',
         ],
         [
-            'key' => 'kewilayahan',
-            'name' => 'Substansi Koordinasi Kewilayahan dan Perubahan Iklim',
-            'official_name' => 'Kepala Substansi Koordinasi Kewilayahan dan Perubahan Iklim',
-            'acronym' => 'KKPI',
-            'palette' => [[31, 63, 92], [52, 101, 140]],
-            'parent' => 'direktur',
-            'sort_order' => 70,
-            'description' => 'Koordinasi kewilayahan dan perubahan iklim. Contoh struktur.',
+            'key' => 'katim-rumah-tangga',
+            'name' => 'Ketua Tim Rumah Tangga dan Protokol',
+            'official_name' => 'Yoga Pratama',
+            'level' => OrganizationalLevel::Katim,
+            'acronym' => 'RT',
+            'palette' => [[24, 81, 50], [41, 128, 75]],
+            'parent' => 'kapokja-umum',
+            'sort_order' => 20,
+            'description' => 'Menangani urusan rumah tangga, perlengkapan, dan protokol kegiatan direktorat. Data contoh.',
+        ],
+        [
+            'key' => 'fungsional-perencana',
+            'name' => 'Jabatan Fungsional Perencana',
+            'official_name' => 'Bagus Prakoso',
+            'level' => OrganizationalLevel::Fungsional,
+            'acronym' => 'FUNG',
+            'palette' => [[120, 30, 85], [171, 55, 122]],
+            'parent' => 'pimpinan',
+            'sort_order' => 90,
+            'description' => 'Melaksanakan tugas fungsional perencanaan pembangunan daerah. Data contoh tanpa foto.',
         ],
     ];
 
     public function run(): void
     {
+        $this->removeLegacyUnits();
+
         /** @var array<string, int> $ids */
         $ids = [];
 
         foreach ($this->units as $data) {
-            $photoPath = $this->generatePhoto($data);
-
             $unit = OrganizationalUnit::query()->updateOrCreate(
                 ['name' => $data['name']],
                 [
                     'official_name' => $data['official_name'],
-                    'photo' => $photoPath,
+                    'level' => $data['level'],
+                    'photo' => $this->photoPath($data),
                     'parent_id' => $data['parent'] !== null ? $ids[$data['parent']] : null,
                     'sort_order' => $data['sort_order'],
                     'description' => $data['description'],
@@ -137,62 +236,120 @@ class OrganizationalStructureSeeder extends Seeder
         }
     }
 
-    /**
-     * Generate foto monogram 640x640 untuk sebuah jabatan.
-     *
-     * @param  array{acronym: string, palette: array{int, int, int}[]}  $data
-     */
-    private function generatePhoto(array $data): string
+    private function removeLegacyUnits(): void
     {
-        $size = 640;
+        OrganizationalUnit::query()
+            ->whereIn('name', $this->legacyNames)
+            ->get()
+            ->each(fn (OrganizationalUnit $unit) => $unit->delete());
+    }
 
-        $image = imagecreatetruecolor($size, $size);
+    /**
+     * @param  array{
+     *     key: string,
+     *     acronym: string,
+     *     palette: array<int, array{int, int, int}>,
+     *     level: OrganizationalLevel
+     * }  $data
+     */
+    private function photoPath(array $data): ?string
+    {
+        if (! $data['level']->hasPhoto()) {
+            return null;
+        }
+
+        $path = self::PHOTO_DIRECTORY.'/monogram-'.$data['key'].'.jpg';
+
+        if (! $this->hasCurrentPhoto($path)) {
+            $this->generatePhoto($data, $path);
+        }
+
+        return $path;
+    }
+
+    /**
+     * Foto contoh hanya dibuat ulang jika belum ada atau masih memakai
+     * dimensi lama yang membuat monogram terpotong pada kartu.
+     */
+    private function hasCurrentPhoto(string $path): bool
+    {
+        $disk = Storage::disk('public');
+
+        if (! $disk->exists($path)) {
+            return false;
+        }
+
+        $size = @getimagesize($disk->path($path));
+
+        return $size !== false
+            && $size[0] === self::PHOTO_WIDTH
+            && $size[1] === self::PHOTO_HEIGHT;
+    }
+
+    /**
+     * Generate foto monogram potret untuk sebuah jabatan. Ukuran mengikuti
+     * proporsi kolom foto pada kartu agar huruf tidak terpotong.
+     *
+     * @param  array{acronym: string, palette: array<int, array{int, int, int}>}  $data
+     */
+    private function generatePhoto(array $data, string $path): void
+    {
+        $width = self::PHOTO_WIDTH;
+        $height = self::PHOTO_HEIGHT;
+
+        $image = imagecreatetruecolor($width, $height);
 
         imageantialias($image, true);
 
         [$from, $to] = $data['palette'];
 
-        for ($y = 0; $y < $size; $y++) {
-            $ratio = $y / ($size - 1);
+        for ($y = 0; $y < $height; $y++) {
+            $ratio = $y / ($height - 1);
             $color = imagecolorallocate(
                 $image,
                 (int) round($from[0] + ($to[0] - $from[0]) * $ratio),
                 (int) round($from[1] + ($to[1] - $from[1]) * $ratio),
                 (int) round($from[2] + ($to[2] - $from[2]) * $ratio),
             );
-            imageline($image, 0, $y, $size, $y, $color);
+            imageline($image, 0, $y, $width, $y, $color);
         }
 
         $overlay = imagecolorallocatealpha($image, 255, 255, 255, 88);
-        imagefilledellipse($image, 505, 140, 380, 380, $overlay);
+        imagefilledellipse($image, (int) ($width * 0.8), (int) ($height * 0.24), (int) ($width * 0.62), (int) ($width * 0.62), $overlay);
 
         $overlayDark = imagecolorallocatealpha($image, 0, 0, 0, 96);
-        imagefilledellipse($image, 150, 545, 420, 420, $overlayDark);
+        imagefilledellipse($image, (int) ($width * 0.22), (int) ($height * 0.88), (int) ($width * 0.7), (int) ($width * 0.7), $overlayDark);
 
         $textColor = imagecolorallocate($image, 255, 255, 255);
         $fontBold = $this->fontPath('arialbd.ttf') ?? $this->fontPath('seguibl.ttf');
+        $maxTextWidth = (int) ($width * 0.78);
 
         if ($fontBold !== null) {
-            $fontSize = 210;
+            $fontSize = 150;
             $box = imagettfbbox($fontSize, 0, $fontBold, $data['acronym']);
             $textWidth = abs($box[2] - $box[0]);
+
+            if ($textWidth > $maxTextWidth) {
+                $fontSize = max(24, (int) floor($fontSize * $maxTextWidth / $textWidth));
+                $box = imagettfbbox($fontSize, 0, $fontBold, $data['acronym']);
+                $textWidth = abs($box[2] - $box[0]);
+            }
+
             $textHeight = abs($box[7] - $box[1]);
 
             imagettftext(
                 $image,
                 $fontSize,
                 0,
-                (int) (($size - $textWidth) / 2) - $box[0],
-                (int) (($size + $textHeight) / 2),
+                (int) (($width - $textWidth) / 2) - $box[0],
+                (int) (($height + $textHeight) / 2),
                 $textColor,
                 $fontBold,
                 $data['acronym'],
             );
         } else {
-            imagestring($image, 5, (int) (($size - strlen($data['acronym']) * 9) / 2), (int) ($size / 2) - 7, $data['acronym'], $textColor);
+            imagestring($image, 5, (int) (($width - strlen($data['acronym']) * 9) / 2), (int) ($height / 2) - 7, $data['acronym'], $textColor);
         }
-
-        $path = self::PHOTO_DIRECTORY.'/monogram-'.strtolower($data['acronym']).'.jpg';
 
         $temp = tmpfile();
 
@@ -210,8 +367,6 @@ class OrganizationalStructureSeeder extends Seeder
 
         fclose($temp);
         imagedestroy($image);
-
-        return $path;
     }
 
     private function fontPath(string $file): ?string
