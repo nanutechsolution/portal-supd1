@@ -58,4 +58,11 @@ class UserFactory extends Factory
             'role' => UserRole::Editor,
         ]);
     }
+
+    public function mustChangePassword(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'must_change_password' => true,
+        ]);
+    }
 }

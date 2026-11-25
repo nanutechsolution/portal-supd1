@@ -70,8 +70,8 @@ class UserResource extends Resource
                         ->required(fn (string $operation): bool => $operation === 'create')
                         ->dehydrated(fn (?string $state): bool => filled($state))
                         ->helperText(fn (string $operation): ?string => $operation === 'edit'
-                            ? 'Kosongkan jika tidak ingin mengubah kata sandi.'
-                            : null),
+                            ? 'Kosongkan jika tidak ingin mengubah kata sandi. Jika diisi, pengguna wajib mengganti kata sandi saat login berikutnya.'
+                            : 'Pengguna wajib mengganti kata sandi ini saat login pertama kali.'),
                 ]),
         ]);
     }
@@ -97,6 +97,12 @@ class UserResource extends Resource
                     ->label('Jumlah Berita')
                     ->counts('posts')
                     ->sortable(),
+                TextColumn::make('must_change_password')
+                    ->label('Kata Sandi')
+                    ->badge()
+                    ->formatStateUsing(fn (bool $state): string => $state ? 'Perlu diganti' : 'Aktif')
+                    ->color(fn (bool $state): string => $state ? 'warning' : 'success')
+                    ->toggleable(),
                 TextColumn::make('created_at')
                     ->label('Dibuat')
                     ->dateTime('d M Y')

@@ -3,9 +3,11 @@
 namespace App\Providers\Filament;
 
 use App\Filament\Pages\AppearanceSettings;
+use App\Filament\Pages\Auth\EditProfile;
 use App\Filament\Widgets\LatestPosts;
 use App\Filament\Widgets\PortalStats;
 use App\Http\Middleware\ApplyUserAppearance;
+use App\Http\Middleware\EnsurePasswordIsChanged;
 use App\Models\Setting;
 use App\Models\User;
 use App\Support\Appearance;
@@ -48,11 +50,16 @@ class AdminPanelProvider extends PanelProvider
             ->sidebarCollapsibleOnDesktop()
             ->themeSwitcher(false)
             ->userMenuItems([
+                'profile' => fn (Action $action) => $action
+                    ->label('Ubah Kata Sandi')
+                    ->icon(Heroicon::OutlinedKey)
+                    ->url(fn (): string => Filament::getProfileUrl())
+                    ->sort(0),
                 Action::make('appearance')
                     ->label('Tampilan')
                     ->icon(Heroicon::OutlinedPaintBrush)
                     ->url(fn (): string => AppearanceSettings::getUrl())
-                    ->sort(0),
+                    ->sort(1),
             ])
             ->renderHook(
                 PanelsRenderHook::HEAD_START,
@@ -85,6 +92,7 @@ class AdminPanelProvider extends PanelProvider
                 PortalStats::class,
                 LatestPosts::class,
             ])
+            ->profile(EditProfile::class)
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
@@ -99,7 +107,8 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
-            ]);
+                EnsurePasswordIsChanged::class,
+            ], isPersistent: true);
     }
 
     /**
