@@ -14,7 +14,7 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
-        $email = env('ADMIN_EMAIL', 'admin@supd1.local');
+        $email = env('ADMIN_EMAIL', 'admin@spud1bangda.com');
 
         User::query()->updateOrCreate(
             ['email' => $email],
